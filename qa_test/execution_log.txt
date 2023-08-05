@@ -1,0 +1,25 @@
+[CI/CD Engine] Running on port 8091
+--- Enterprise CI/CD Pipeline Manual QA Live Test ---
+Test 1 Healthcheck:
+ HTTP/1.1 200 OK
+{"status":"UP","service":"enterprise-cicd-pipeline"}
+
+Test 2 Initial Active Slot:
+ HTTP/1.1 200 OK
+{"activeSlot":"BLUE"}
+
+Test 3 Production Release Trigger (Lint -> Test -> Scan -> Blue/Green Deploy):
+ HTTP/1.1 200 OK
+{"pipelineId":"pipe_1795612485528","commitSha":"7a3b49f","branch":"main","stages":[{"stage":"LINT","success":true,"durationMs":1200,"output":"ESLint passed with 0 errors"},{"stage":"TEST","success":true,"durationMs":4500,"output":"14 unit test suites passed"},{"stage":"SECURITY_SCAN","success":true,"durationMs":3100,"output":"Container scan clean: 0 Critical, 0 High vulnerabilities"},{"stage":"DEPLOY","success":true,"durationMs":8200,"output":"Swapped active traffic to slot GREEN"}],"overallSuccess":true,"rollbackTriggered":false,"startedAt":"2026-11-25T13:14:45.528Z","finishedAt":"2026-11-25T13:14:45.528Z"}
+
+Test 4 Verified Traffic Swapped to GREEN:
+ HTTP/1.1 200 OK
+{"activeSlot":"GREEN"}
+
+Test 5 Automated Canary Rollback Triggered:
+ HTTP/1.1 200 OK
+{"status":"ROLLBACK_TRIGGERED","report":{"pipelineId":"pipe_1795612485564","commitSha":"9c118bb","branch":"hotfix/experimental-cache","stages":[{"stage":"LINT","success":true,"durationMs":1200,"output":"ESLint passed with 0 errors"},{"stage":"TEST","success":true,"durationMs":4500,"output":"14 unit test suites passed"},{"stage":"SECURITY_SCAN","success":true,"durationMs":3100,"output":"Container scan clean: 0 Critical, 0 High vulnerabilities"},{"stage":"DEPLOY","success":false,"durationMs":8200,"output":"Healthcheck failed: error rate 6.2% exceeded threshold 1%"}],"overallSuccess":false,"rollbackTriggered":true,"rollbackReason":"Healthcheck failed: error rate 6.2% exceeded threshold 1%","startedAt":"2026-11-25T13:14:45.564Z","finishedAt":"2026-11-25T13:14:45.564Z"},"activeSlotAfterRollback":"GREEN"}
+
+Test 6 Verified Traffic Remained on Stable GREEN Slot:
+ HTTP/1.1 200 OK
+{"activeSlot":"GREEN"}
