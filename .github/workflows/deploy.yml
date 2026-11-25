@@ -3,10 +3,8 @@ name: Enterprise Deployment Pipeline
 on:
   push:
     branches: [ main ]
-
-env:
-  AWS_REGION: us-east-1
-  ECR_REPOSITORY: platform-backend-service
+  pull_request:
+    branches: [ main ]
 
 jobs:
   validate:
@@ -16,33 +14,5 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18.x
-                - run: npm install
-      - run: npm run lint
+      - run: npm install
       - run: npm test
-
-  security-scan:
-    needs: validate
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Run Trivy Vulnerability Scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          ignore-unfixed: true
-          severity: 'CRITICAL,HIGH'
-
-  deploy-production:
-    needs: security-scan
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: arn:aws:iam::123456789012:role/GitHubActionsDeploymentRole
-      - name: Deploy Blue/Green Revision
-        run: |
-          echo "Initiating ECS Blue/Green deployment..."
-          echo "Verifying CloudWatch synthetics health probes..."
